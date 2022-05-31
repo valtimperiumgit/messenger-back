@@ -87,12 +87,12 @@ namespace Messenger.Database
                 {
                     var maxId = idsMessages.Max();
                     var lastMessage = messages.FirstOrDefault(message => message.Id == maxId);
-                    model.Add(new ChatsViewModel { chat = chat, chatUser = chatUser, lastMessage = lastMessage });
+                    model.Add(new ChatsViewModel { chat = chat, chatUser = chatUser, lastMessage = lastMessage, chatMessages = messages});
                 }
 
                 else
                 {
-                    model.Add(new ChatsViewModel { chat = chat, chatUser = chatUser });
+                    model.Add(new ChatsViewModel { chat = chat, chatUser = chatUser});
                 }
                 
             }

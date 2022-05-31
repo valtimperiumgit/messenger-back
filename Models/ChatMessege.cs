@@ -12,5 +12,7 @@ namespace Messenger
         public int? IdClient { get; set; }
         public DateTime? Datetime { get; set; }
         public string? Body { get; set; }
+
+        public bool? Viewed { get; set; }
     }
 }

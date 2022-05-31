@@ -7,5 +7,7 @@
         public ClientViewModel chatUser { get; set; }
 
         public ChatMessege lastMessage { get; set; }
+
+        public List<ChatMessege> chatMessages { get; set; }
     }
 }

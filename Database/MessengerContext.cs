@@ -76,6 +76,10 @@ namespace Messenger
                     .ValueGeneratedOnAdd()
                     .HasColumnName("id");
 
+                entity.Property(e => e.Viewed)
+                    .HasColumnType("bit")
+                    .HasColumnName("viewed");
+
                 entity.Property(e => e.Body)
                     .IsUnicode(false)
                     .HasColumnName("body");

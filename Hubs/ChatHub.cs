@@ -48,11 +48,12 @@ namespace Messenger.Hubs
             var user = await _repository.GetById(idUser);
 
             ChatMessege newMessage = new ChatMessege
-            {   
+            {
                 IdChat = idChat,
                 Datetime = DateTime.Now,
                 IdClient = idUser,
-                Body = message
+                Body = message,
+                Viewed = false
             };
 
             _repository.AddMessage(newMessage);
