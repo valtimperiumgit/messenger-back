@@ -26,10 +26,10 @@ namespace Messenger.Controllers
         }
        
         [HttpPost("login")]
-        public JsonResult Login([FromBody] string phone)
+        public async Task<JsonResult> Login([FromBody] string phone)
         {
             
-            Client client = _repository.GetByPhone(phone);
+            Client client = await _repository.GetByPhoneAsync(phone);
             if (client == null)
                 return Json("User not found");
 
@@ -41,23 +41,23 @@ namespace Messenger.Controllers
 
         
         [HttpPost("user")]
-        public IActionResult User([FromBody] string jwtToken)
+        public async Task<IActionResult> User([FromBody] string jwtToken)
         {   
             var token = _jwtService.Verify(jwtToken);
             int idUser = int.Parse(token.Issuer);
-            var user = _repository.GetById(idUser);
+            var user = await _repository.GetByIdAsync(idUser);
             return Ok(user);
         }
 
         [HttpPost("chats")]
-        public IActionResult UserChats([FromBody] string jwtToken)
+        public async Task<IActionResult> UserChats([FromBody] string jwtToken)
         {
 
             var token = _jwtService.Verify(jwtToken);
             int idUser = int.Parse(token.Issuer);
-            var chats = _repository.GetChats(idUser);
+            var chats = await _repository.GetChatsAsync(idUser);
 
-            var model = _repository.GetChatsModel(chats, idUser);
+            var model = await _repository.GetChatsModelAsync(chats, idUser);
 
             return Ok(model);
         }
@@ -66,9 +66,9 @@ namespace Messenger.Controllers
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] int idChat)
         {
-            var chat = await _repository.GetChat(idChat);
-            var members = _repository.GetChatMembers(idChat);
-            var messeges = _repository.GetChatMesseges(idChat);
+            var chat = await _repository.GetChatAsync(idChat);
+            var members = await _repository.GetChatMembersAsync(idChat);
+            var messeges = await _repository.GetChatMessegesAsync(idChat);
 
             ChatViewModel model = new ChatViewModel
             {
@@ -84,13 +84,13 @@ namespace Messenger.Controllers
         public async Task<IActionResult> SelectChat([FromBody] ChatInfo selectChat)
         {
             
-            var chat = await _repository.GetChat(selectChat.idChat);
+            var chat = await _repository.GetChatAsync(selectChat.idChat);
 
             var jwtToken = _jwtService.Verify(selectChat.token);
             int idUser = int.Parse(jwtToken.Issuer);
 
-            var members = _repository.GetChatMembers(selectChat.idChat);
-            var messages = _repository.GetChatMesseges(selectChat.idChat);
+            var members = await _repository.GetChatMembersAsync(selectChat.idChat);
+            var messages = await _repository.GetChatMessegesAsync(selectChat.idChat);
 
             var chatUser = members.FirstOrDefault(member => member.client.Id != idUser);
 
@@ -105,5 +105,22 @@ namespace Messenger.Controllers
 
             return Ok(model);
         }
+
+        [HttpPost("readMessages")]
+        public async Task ReadMessages([FromBody] ChatInfo chat)
+        {
+            var jwtToken = _jwtService.Verify(chat.token);
+            int idUser = int.Parse(jwtToken.Issuer);
+            await _repository.ReadMessagesAsync(chat.idChat, idUser);
+        }
+
+        [HttpPost("messages")]
+        public async Task<IActionResult> GetMessages([FromBody] MessagesLimit data)
+        {
+
+            var messages = await _repository.GetMessagesByLimitAsync(data.idChat, data.limit, data.page);
+            return Ok(messages);
+        }
+
     }
 }

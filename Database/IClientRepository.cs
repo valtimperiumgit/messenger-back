@@ -4,18 +4,22 @@ namespace Messenger.Database
 {
     public interface IClientRepository
     {
-        Client GetByPhone(string phone);
-        Task<Client> GetById(int id);
-        List<Chat> GetChats(int id);
+        Task<Client> GetByPhoneAsync(string phone);
+        Task<Client> GetByIdAsync(int id);
+        Task<List<Chat>> GetChatsAsync(int id);
 
-        Task<Chat> GetChat(int id);
+        Task<Chat> GetChatAsync(int id);
 
-        List<ClientViewModel> GetChatMembers(int id);
+        Task<List<ClientViewModel>> GetChatMembersAsync(int id);
 
-        List<ChatMessege> GetChatMesseges(int id);
+        Task<List<ChatMessege>> GetChatMessegesAsync(int id);
 
-        List<ChatsViewModel> GetChatsModel(List<Chat> chats, int idUser);
+        Task<List<ChatsViewModel>> GetChatsModelAsync(List<Chat> chats, int idUser);
 
-        void AddMessage(ChatMessege message);
+        Task AddMessageAsync(ChatMessege message);
+
+        Task ReadMessagesAsync(int idChat, int idUser);
+
+        Task<List<ChatMessege>> GetMessagesByLimitAsync(int idChat, int limit, int page);
     }
 }

@@ -18,13 +18,13 @@ namespace Messenger.Hubs
 
         public async Task SelectChat(int idChat, string token)
         {
-            var chat = await _repository.GetChat(idChat);
+            var chat = await _repository.GetChatAsync(idChat);
 
             var jwtToken = _jwtService.Verify(token);
             int idUser = int.Parse(jwtToken.Issuer);
 
-            var members = _repository.GetChatMembers(idChat);
-            var messages = _repository.GetChatMesseges(idChat);
+            var members = await _repository.GetChatMembersAsync(idChat);
+            var messages = await _repository.GetChatMessegesAsync(idChat);
 
             var chatUser = members.FirstOrDefault(member => member.client.Id != idUser);
 
@@ -41,11 +41,11 @@ namespace Messenger.Hubs
 
         public async Task SendMessage(string message, int idChat, string token)
         {
-            var chat = await _repository.GetChat(idChat);
+            var chat = await _repository.GetChatAsync(idChat);
 
             var jwtToken = _jwtService.Verify(token);
             int idUser = int.Parse(jwtToken.Issuer);
-            var user = await _repository.GetById(idUser);
+            var user = await _repository.GetByIdAsync(idUser);
 
             ChatMessege newMessage = new ChatMessege
             {
@@ -56,7 +56,7 @@ namespace Messenger.Hubs
                 Viewed = false
             };
 
-            _repository.AddMessage(newMessage);
+            await _repository.AddMessageAsync(newMessage);
 
             await Clients.All.SendAsync("ReceiveMessages", newMessage);
         }

@@ -1,4 +1,5 @@
 ﻿using Messenger.ViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace Messenger.Database
 {
@@ -11,57 +12,57 @@ namespace Messenger.Database
             _context = context;
         }
 
-        public async Task<Client> GetById(int id)
+        public async Task<Client> GetByIdAsync(int id)
         {
-            return _context.Clients.FirstOrDefault(c => c.Id == id);
+            return await _context.Clients.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public Client GetByPhone(string phone)
+        public async Task<Client> GetByPhoneAsync(string phone)
         {
-            return _context.Clients.FirstOrDefault(c => c.Phone == phone);
+            return await _context.Clients.FirstOrDefaultAsync(c => c.Phone == phone);
         }
 
-        public async Task<Chat?> GetChat(int id)
+        public async Task<Chat?> GetChatAsync(int id)
         {
-            return _context.Chats.FirstOrDefault(chat => chat.IdChat == id);
+            return await _context.Chats.FirstOrDefaultAsync(chat => chat.IdChat == id);
         }
 
-        public List<ClientViewModel> GetChatMembers(int id)
+        public async Task<List<ClientViewModel>> GetChatMembersAsync(int id)
         {
-            var chatMembers = _context.ChatMembers.Where(member => member.IdChat == id).ToList();
+            var chatMembers = await _context.ChatMembers.Where(member => member.IdChat == id).ToListAsync();
             var idClients = new List<int>();
             foreach(var member in chatMembers)
                 idClients.Add(member.IdClient);
 
-            var clients = _context.Clients.Where(member => idClients.Contains(member.Id)).ToList();
+            var clients = await _context.Clients.Where(member => idClients.Contains(member.Id)).ToListAsync();
             List<ClientViewModel> model = new List<ClientViewModel>();
 
             foreach (var client in clients)
-                model.Add(new ClientViewModel { client = client, avatars = _context.ClientAvatars.Where(c => c.Id == client.Id).ToList() });
+                model.Add(new ClientViewModel { client = client, avatars = await _context.ClientAvatars.Where(c => c.Id == client.Id).ToListAsync() });
 
             return model;
         }
 
-        public List<ChatMessege> GetChatMesseges(int id)
+        public async Task<List<ChatMessege>> GetChatMessegesAsync(int id)
         {
-            return _context.ChatMesseges.Where(messege => messege.IdChat == id).ToList();
+            return await _context.ChatMesseges.Where(messege => messege.IdChat == id).ToListAsync();
         }
 
-        public List<Chat> GetChats(int id)
+        public async Task<List<Chat>> GetChatsAsync(int id)
         {
-            var user = _context.Clients.FirstOrDefault(user => user.Id == id);
+            var user = await _context.Clients.FirstOrDefaultAsync(user => user.Id == id);
             
-            var chats = _context.ChatMembers.Where(chat => chat.IdClient == id).ToList();
+            var chats = await _context.ChatMembers.Where(chat => chat.IdClient == id).ToListAsync();
             var chatsIds = new List<int>();
             foreach(var chat in chats)
             {
                 chatsIds.Add(chat.IdChat);
             }
 
-            return _context.Chats.Where(chat => chatsIds.Contains(chat.IdChat)).ToList();
+            return await _context.Chats.Where(chat => chatsIds.Contains(chat.IdChat)).ToListAsync();
         }
 
-        public List<ChatsViewModel> GetChatsModel(List<Chat> chats, int idUser)
+        public async Task<List<ChatsViewModel>> GetChatsModelAsync(List<Chat> chats, int idUser)
         {
             List<int> idsChats = new List<int>();
             foreach (var chat in chats)
@@ -73,9 +74,9 @@ namespace Messenger.Database
 
             foreach (var chat in chats)
             {
-                var members = GetChatMembers(chat.IdChat);
+                var members = await GetChatMembersAsync(chat.IdChat);
                 var chatUser = members.FirstOrDefault(user => user.client.Id != idUser);
-                var messages = GetChatMesseges(chat.IdChat);
+                var messages = await GetChatMessegesAsync(chat.IdChat);
 
                 List<int> idsMessages = new List<int>();
                 foreach(var message in messages)
@@ -101,10 +102,49 @@ namespace Messenger.Database
 
         }
 
-        public void AddMessage(ChatMessege message)
+        public async Task AddMessageAsync(ChatMessege message)
         {
             _context.ChatMesseges.Add(message);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReadMessagesAsync(int idChat, int idUser)
+        {
+            var messages = await _context.ChatMesseges.Where(message => message.IdClient != idUser && message.IdChat == idChat).ToListAsync();
+
+            foreach(var message in messages)
+            {
+                message.Viewed = true;
+            };
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<ChatMessege>> GetMessagesByLimitAsync(int idChat, int limit, int page)
+        {
+            var allMessages = await _context.ChatMesseges.Where(message =>
+            message.IdChat == idChat).ToListAsync();
+
+            if(allMessages.Count < limit && page == 1)
+            {
+                return allMessages;
+            }
+
+            if(allMessages.Count - limit * page < 0)
+            {
+                List<ChatMessege> mes = new List<ChatMessege>();
+                return mes;
+            }
+            
+            if(allMessages.Count - limit * page < limit)
+            {
+                var messagesLim = allMessages.GetRange(0, allMessages.Count - limit * page);
+                return messagesLim;
+            }
+            
+            var messages = allMessages.GetRange(allMessages.Count - limit * page, limit);
+
+            return messages;
         }
     }
 }
