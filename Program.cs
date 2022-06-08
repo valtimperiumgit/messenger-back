@@ -9,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddRazorPages();
 builder.Services.AddDbContext<MessengerContext>();
+
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+
 builder.Services.AddScoped<JWTService>();
 builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; });
 
@@ -40,8 +44,8 @@ app.UseRouting();
 
 app.UseCors();
 
-app.UseAuthentication();    // аутентификация
-app.UseAuthorization();     // авторизация
+app.UseAuthentication();    
+app.UseAuthorization();     
 
 app.UseEndpoints(endpoints =>
 {
