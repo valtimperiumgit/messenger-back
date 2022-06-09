@@ -45,39 +45,25 @@ namespace Messenger.Database
                 .Where(message => message.IdChat == idChat)
                 .ToListAsync();
 
-            if (allMessages.Count < limit && page == 1)
-            {
-                return allMessages;
-            }
+            List<ChatMessege> messagesForReturn = new List<ChatMessege>();
 
-            if ((allMessages.Count - limit * page == 0))
-            {
-                var messagesOnLim = allMessages.GetRange(allMessages.Count - limit * page, limit);
+            if (allMessages.Count < limit)
+                messagesForReturn = allMessages;
 
-                return messagesOnLim;
-            }
+            else if (allMessages.Count > limit * page)
+                messagesForReturn = allMessages.GetRange(allMessages.Count - (limit * page), limit);
 
-            if ((allMessages.Count - limit * page < limit))
-            {
-                if (page == 1)
-                {
-                    var messagesAll = allMessages.GetRange(allMessages.Count - limit * page, limit);
+            else if (allMessages.Count < limit * page)
+                messagesForReturn = allMessages.GetRange(0, allMessages.Count - limit * (page - 1));
 
-                    return messagesAll;
-                }
-                var messagesLim = allMessages.GetRange(0, allMessages.Count - limit * page);
-                return messagesLim;
-            }
+            return messagesForReturn;
+        }
 
-            if (allMessages.Count - limit * page < 0)
-            {
-                List<ChatMessege> mes = new List<ChatMessege>();
-                return mes;
-            }
-
-            var messages = allMessages.GetRange(allMessages.Count - limit * page, limit);
-
-            return messages;
+        public async Task<int> CountAllChatMessages(int idChat)
+        {
+            return await _context.ChatMesseges.AsNoTracking()
+                .Where(message => message.IdChat == idChat)
+                .CountAsync();
         }
     }
 }

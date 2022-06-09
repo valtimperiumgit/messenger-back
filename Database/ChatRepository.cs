@@ -6,13 +6,12 @@ namespace Messenger.Database
     public class ChatRepository : IChatRepository
     {
         private readonly MessengerContext _context;
-        private readonly IClientRepository _clientRepository;
+  
         private readonly IMessageRepository _messageRepository;
 
-        public ChatRepository(MessengerContext context, IClientRepository clientRepository, IMessageRepository messageRepository)
+        public ChatRepository(MessengerContext context, IMessageRepository messageRepository)
         {
             _context = context;
-            _clientRepository = clientRepository;
             _messageRepository = messageRepository;
         }
 
@@ -24,12 +23,6 @@ namespace Messenger.Database
 
         public async Task<List<ClientViewModel>> GetChatMembersAsync(int id)
         {
-           // var chatMembers = await _context.ChatMembers.AsNoTracking()
-             //   .Where(member => member.IdChat == id).ToListAsync();
-            // var idClients = new List<int>();
-           // foreach (var member in chatMembers)
-             // idClients.Add(member.IdClient);
-
 
             var idsClients = await _context.ChatMembers.AsNoTracking()
                 .Where(member => member.IdChat == id)
@@ -53,25 +46,23 @@ namespace Messenger.Database
 
         public async Task<List<Chat>> GetChatsAsync(int id)
         {
-            var user = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(user => user.Id == id);
+            var user = await _context.Clients.AsNoTracking()
+                .FirstOrDefaultAsync(user => user.Id == id);
 
-            var chats = await _context.ChatMembers.AsNoTracking().Where(chat => chat.IdClient == id).ToListAsync();
-            var chatsIds = new List<int>();
-            foreach (var chat in chats)
-            {
-                chatsIds.Add(chat.IdChat);
-            }
+            var chatsIds = await _context.ChatMembers.AsNoTracking()
+                .Where(chat => chat.IdClient == id)
+                .Select(chat => chat.IdChat)
+                .ToListAsync();
 
-            return await _context.Chats.AsNoTracking().Where(chat => chatsIds.Contains(chat.IdChat)).ToListAsync();
+            return await _context.Chats.AsNoTracking()
+                .Where(chat => chatsIds.Contains(chat.IdChat))
+                .ToListAsync();
         }
 
         public async Task<List<ChatsViewModel>> GetChatsModelAsync(List<Chat> chats, int idUser)
         {
-            List<int> idsChats = new List<int>();
-            foreach (var chat in chats)
-            {
-                idsChats.Add(chat.IdChat);
-            }
+
+            var chatsIds = chats.Select(chat => chat.IdChat).ToList();
 
             List<ChatsViewModel> model = new List<ChatsViewModel>();
 
@@ -80,24 +71,30 @@ namespace Messenger.Database
                 var members = await GetChatMembersAsync(chat.IdChat);
                 var chatUser = members.FirstOrDefault(user => user.client.Id != idUser);
                 var messages = await _messageRepository.GetMessagesByLimitAsync(chat.IdChat, 15, 1);
+                var allChatMessagesCount = await _messageRepository.CountAllChatMessages(chat.IdChat);
 
-
-                List<int> idsMessages = new List<int>();
-                foreach (var message in messages)
-                {
-                    idsMessages.Add(message.Id);
-                }
+                List<int> idsMessages = messages.Select(message => message.Id).ToList();
 
                 if (idsMessages.Count != 0)
                 {
                     var maxId = idsMessages.Max();
-                    var lastMessage = messages.FirstOrDefault(message => message.Id == maxId);
-                    model.Add(new ChatsViewModel { chat = chat, chatUser = chatUser, lastMessage = lastMessage, chatMessages = messages });
+                    var lastMessage = messages
+                        .FirstOrDefault(message => message.Id == maxId);
+
+                    model.Add(new ChatsViewModel
+                    {
+                        chat = chat,
+                        chatUser = chatUser,
+                        lastMessage = lastMessage,
+                        chatMessages = messages,
+                        allMessagesCount = allChatMessagesCount
+                    });
                 }
 
                 else
                 {
-                    model.Add(new ChatsViewModel { chat = chat, chatUser = chatUser });
+                    model.Add(new ChatsViewModel { chat = chat, 
+                        chatUser = chatUser });
                 }
 
             }

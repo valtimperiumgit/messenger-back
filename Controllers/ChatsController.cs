@@ -22,7 +22,7 @@ namespace Messenger.Controllers
         }
 
         [HttpPost("chats")]
-        public async Task<IActionResult> UserChats([FromBody] string jwtToken)
+        public async Task<JsonResult> UserChats([FromBody] string jwtToken)
         {
 
             var token = _jwtService.Verify(jwtToken);
@@ -31,7 +31,7 @@ namespace Messenger.Controllers
 
             var model = await _chatRepository.GetChatsModelAsync(chats, idUser);
 
-            return Ok(model);
+            return Json(model);
         }
 
         [HttpPost("chat")]
@@ -46,6 +46,7 @@ namespace Messenger.Controllers
                 chat = chat,
                 members = members,
                 chatMesseges = messeges
+                
             };
 
             return Ok(model);

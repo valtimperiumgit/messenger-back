@@ -25,7 +25,6 @@ namespace Messenger.Controllers
         [HttpPost("messages")]
         public async Task<IActionResult> GetMessages([FromBody] MessagesLimit data)
         {
-
             var messages = await _messageRepository.GetMessagesByLimitAsync(data.idChat, data.limit, data.page);
             return Ok(messages);
         }

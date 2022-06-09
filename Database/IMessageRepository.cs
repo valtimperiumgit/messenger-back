@@ -9,5 +9,7 @@
         Task ReadMessagesAsync(int idChat, int idUser);
 
         Task<List<ChatMessege>> GetMessagesByLimitAsync(int idChat, int limit, int page);
+
+        Task<int> CountAllChatMessages(int idChat);
     }
 }
